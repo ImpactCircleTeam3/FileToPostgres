@@ -3,6 +3,7 @@ import os
 import json
 import ast
 import csv
+from psycopg2.extras import execute_values
 from typing import Optional, List
 from dataclasses import dataclass
 from dotenv import load_dotenv
@@ -105,5 +106,16 @@ def extract_and_transform_source() -> List[Sink]:
     return data
 
 
+def write_to_postgres(tweets: List[Sink]):
+    db = DB.get_instance().DB
+    sql = f"""
+        INSERT INTO tweet ({','.join(Sink.__annotations__.keys())})  VALUES %s
+        ON CONFLICT (status_id) DO NOTHING
+    """
+    execute_values(db.cur, sql, [tuple(tweet.__dict__.values()) for tweet in tweets])
+
+
 if __name__ == "__main__":
-    extract_and_transform_source()
+    tweets = extract_and_transform_source()
+    for i in range(0, len(tweets) - 500, 500):
+        write_to_postgres(tweets[i: i+500])
