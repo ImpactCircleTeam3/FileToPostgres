@@ -8,6 +8,7 @@ CREATE TABLE IF NOT EXISTS tweet (
     trend VARCHAR(80),
     normalized_trend VARCHAR(80),
     language_code VARCHAR(10),
+    author VARCHAR(120),
     hashtags TEXT[],
     tagged_persons TEXT[],
     date_label DATE,

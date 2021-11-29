@@ -54,6 +54,7 @@ class Sink:
     trend: str
     normalized_trend: str
     language_code: str
+    author: str
     hashtags: List[str]
     tagged_persons: List[str]
     time_collected: datetime
@@ -73,6 +74,7 @@ class Source:
     normalized_trend: str
     time_collected: str
     date_label: str
+    user: str
     language_code: str
     hashtags: str
     tagged_persons: str
@@ -87,8 +89,9 @@ class Source:
             trend=self.trend,
             normalized_trend=self.normalized_trend,
             language_code=self.language_code,
-            hashtags=[] if self.hashtags == "" else ast.literal_eval(self.hashtags),
-            tagged_persons=[] if self.tagged_persons == "" else ast.literal_eval(self.tagged_persons),
+            author=self.user.lower(),
+            hashtags=[] if self.hashtags == "" else ast.literal_eval(self.hashtags.lower()),
+            tagged_persons=[] if self.tagged_persons == "" else ast.literal_eval(self.tagged_persons.lower()),
             time_collected=datetime.strptime(self.time_collected, "%Y-%m-%dT%H:%M:%SZ"),
             date_label=datetime.strptime(self.date_label, "%b %d %Y")
         )
