@@ -3,6 +3,8 @@ import os
 import json
 import ast
 import csv
+import functools
+import operator
 from psycopg2.extras import execute_values
 from typing import Optional, List
 from dataclasses import dataclass
@@ -109,6 +111,31 @@ def extract_and_transform_source() -> List[Sink]:
     return data
 
 
+def get_users_from_data(data: List[Sink]) -> List[str]:
+    author_list = [entity.author for entity in data]
+    linked_users_list = [entity.tagged_persons for entity in data if entity.tagged_persons != []]
+
+    # flatten list
+    linked_users_list = list(functools.reduce(operator.concat, linked_users_list))
+
+    # create unique lists of users
+    user_list = list(set(author_list + linked_users_list))
+
+    return user_list
+
+
+def get_hashtags_from_data(data: List[Sink]) -> List[str]:
+    hashtag_list = [entity.hashtags for entity in data if entity.hashtags != []]
+
+    # flatten list
+    hashtag_list = list(functools.reduce(operator.concat, hashtag_list))
+
+    # create unique lists of users
+    hashtag_list = list(set(hashtag_list))
+
+    return hashtag_list
+
+
 def write_to_postgres(tweets: List[Sink]):
     db = DB.get_instance().DB
     sql = f"""
@@ -118,7 +145,36 @@ def write_to_postgres(tweets: List[Sink]):
     execute_values(db.cur, sql, [tuple(tweet.__dict__.values()) for tweet in tweets])
 
 
+def write_users_to_postgres(users: List[str]):
+    users = [(user, datetime.now()) for user in users]
+    db = DB.get_instance().DB
+    sql = f"""
+            INSERT INTO twitter_user (username, timestamp) VALUES %s
+            ON CONFLICT (username) DO NOTHING
+        """
+    execute_values(db.cur, sql, users)
+
+
+def write_hashtags_to_postgres(hashtags: List[str]):
+    hashtags = [(hashtag, datetime.now()) for hashtag in hashtags]
+    db = DB.get_instance().DB
+    sql = f"""
+            INSERT INTO hashtag (hashtag, timestamp)  VALUES %s
+            ON CONFLICT (hashtag) DO NOTHING
+        """
+    execute_values(db.cur, sql, hashtags, )
+
+
 if __name__ == "__main__":
     tweets = extract_and_transform_source()
-    for i in range(0, len(tweets) - 500, 500):
-        write_to_postgres(tweets[i: i+500])
+
+    users = get_users_from_data(tweets)
+    for i in range(0, len(users) - 500, 500):
+        write_users_to_postgres(users[i: i+500])
+
+    hashtags = get_hashtags_from_data(tweets)
+    for i in range(0, len(hashtags) - 500, 500):
+        write_hashtags_to_postgres(hashtags[i: i+500])
+
+    # for i in range(0, len(tweets) - 500, 500):
+    #     write_to_postgres(tweets[i: i+500])

@@ -16,3 +16,19 @@ CREATE TABLE IF NOT EXISTS tweet (
     PRIMARY KEY (id),
     UNIQUE (status_id)
 );
+
+CREATE TABLE IF NOT EXISTS twitter_user (
+    id SERIAL,
+    username VARCHAR(320),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE (username)
+);
+
+CREATE TABLE IF NOT EXISTS hashtag (
+    id SERIAL,
+    hashtag VARCHAR(320),
+    timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    UNIQUE (hashtag)
+);
